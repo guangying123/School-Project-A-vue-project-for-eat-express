@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mypost</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .postgo {
+            display: inline-block;
+            background-color: dodgerblue;
+            border-radius: 10px;
+            width: 60px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            color: #fff;
+            cursor: pointer;
+        }
+        .urlinput {
+            width: 500px;
+            height: 25px;
+        }
+        .top {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .myres {
+            min-height: 200px;
+            border: 1px solid #A0A0A0;
+            width: 80%;
+            margin: 0 auto;
+            margin-top: 100px;
+        }
+        .des {
+            color: #A0A0A0;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .myres span {
+            display: inline-block;
+            width: 90px;
+            height: 30px;
+            margin-top: 15px;
+            margin-right: 15px;
+            border-radius: 5px;
+        }
+    </style>
+    <!-- CDN -->
+    <!--<script src="https://cdn.jsdelivr.net/npm/vue"></script>-->
+    <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+    <!--注意：express使用ejs新建项目后，默认文件夹是public文件夹下，即在其他文件中引入public下的公共文件时，按如下的方式引入-->
+    <script src="javascripts/vue.js"></script>
+    <script src="javascripts/axios.js"></script>
+</head>
+<body>
+<div id="mypostcont">
+    <div class="top">
+        <input v-model="myurl"  class="urlinput" placeholder="请输入url"/> <span class="postgo"  @click="postgo">post</span>
+        <p class="des">(注：输入的url默认协议主机以及端口为分别为:http://localhost:3000,故上面的utl中仅需要输入path即可,例/greet）</p>
+    </div>
+    <div class="myres">
+        <span v-if="ispost">status:  </span>  {{myresponse.status}}<br>
+        <span v-if="ispost">statusText:  </span>{{myresponse.statusText}}<br>
+        <span v-if="ispost">data:  </span>{{myresponse.data}}
+    </div>
+</div>
+</body>
+<script>
+    var vm = new Vue({
+        el: '#mypostcont',
+       data: {
+            myurl: '',
+            myresponse: {
+                status: '',
+                data: '',
+                statusText: ''
+            },
+           ispost: false
+       },
+        methods: {
+            postgo() {
+                let self = this;
+                axios.get('http://localhost:3000/mypostutil?myurl='+this.myurl).then(res => {
+                    self.myresponse.status = res.status;
+                    self.myresponse.data = res.data;
+                    self.myresponse.statusText = res.statusText;
+                    self.ispost = true;
+                    console.log(res);
+                }).catch(err => {
+                    console.log(err);
+                })
+            }
+        }
+
+    });
+</script>
+</html>

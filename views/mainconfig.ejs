@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html ;charset=utf-8" />
+    <title><%= title %></title>
+    <script src="javascripts/vue.js"></script>
+    <script src="javascripts/axios.js"></script>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .configcont{
+            display: flex;
+            display: -webkit-flex;
+            flex-direction: column;
+            padding: 10px 25px;
+        }
+        .greet {
+            border-top: 1px solid #A0A0A0;
+            margin-bottom: 20px;
+        }
+        .configtitle{
+            background-color: #3fb34f;
+            border-radius: 5px;
+            width: 150px;
+            height: 30px;
+            line-height: 30px;
+            color: #fff;
+            padding-left: 5px;
+            margin: 20px 15px;
+        }
+        .save {
+            display: inline-block;
+            width: 50px;
+            height: 25px;
+            line-height: 25px;
+            color:  #337ab7;
+            text-align: center;
+            background-color: #fff;
+            border: 1px solid #337ab7;
+            border-radius: 3px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .greetintput {
+            height: 20px;
+            width: 50%;
+            margin-left: 45px;
+            transform: translateY(-1px);
+        }
+        .cardcenter {
+            border-top: 1px solid #A0A0A0;
+            margin-bottom: 20px;
+        }
+        .createcard {
+            width: 90px;
+            margin-left: 0;
+        }
+        .cardplain {
+            padding: 0px 45px;
+        }
+        .cardnotice {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+        .carditem {
+            margin: 15px 0;
+        }
+        .carditem span{
+            margin-right: 10px;
+        }
+        .carditem input {
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="configmain">
+  <div class="configcont">
+      <div class="greet">
+          <p class="configtitle">问候语</p>
+           <input placeholder="限制在200字以内" v-model="greet"  class="greetintput"/><span class="save" @click="changegreet">保存</span>
+      </div>
+      <div class="cardcenter">
+          <p class="configtitle">卡券</p>
+          <div class="cardplain">
+              <p>已投放卡券</p>
+              <p class="cardnotice">(说明：下面的数据表示，在消费满限制元时可使用卡券抵挡面值元的金额)</p>
+              <div class="cardthrowed">
+                  <div v-for="(item,index) in cardcenter" :key="index" class="carditem">
+                      <span>面值</span><input type="number" v-model="item.value" readonly/>
+                      <span>限制</span><input type="number" v-model="item.uselimit" readonly/>
+                      <span>库存</span><input type="number" v-model="item.count" readonly/>
+                  </div>
+              </div>
+              <p class="save createcard" @click="iscreate=false" v-if="iscreate">新建卡券</p>
+              <div v-if="!iscreate" class="carditem">
+                  <span>面值</span><input type="number" v-model="newvalue" />
+                  <span>限制</span><input type="number" v-model="newuselimit" />
+                  <span>库存</span><input type="number" v-model="newcount" />
+                  <span class="save" @click="createcard">新建</span>
+              </div>
+          </div>
+      </div>
+  </div>
+
+</div>
+</body>
+<script>
+    var vm = new Vue({
+        el: '#configmain',
+        data: {
+            baseUrl:'http://localhost:3000/',
+            greet:'',
+            cardcenter:[],
+            iscreate:true,
+            newvalue:0,
+            newuselimit:0,
+            newcount:0
+        },
+        methods: {
+            //公共的一些方法
+            myget(url,callback) {  //公共的get请求
+                if(!url || !callback) {
+                    throw new Error('url和回调函数是两个必要的参数');
+                    return ;
+                }
+                axios.get(url).then(res=>{
+                    let data = res.data;
+                    if(data.error == -1) {
+                        alert('数据加载出错'+data.errmsg);
+                        return;
+                    }
+                    callback&callback(data);
+                }).catch(err => {
+                    alert('数据加载出错： '+err);
+                });
+            },
+            //公共的post方法
+            mypost(url,data,callback){
+                 axios.post(url,data).then(res=>{
+                     let data = res.data;
+                     if(data.error == -1){
+                         alert('数据加载出错'+data.errmsg);
+                         return;
+                     }
+                     callback&callback();
+                 }).catch(err =>{
+                     alert(err);
+                 })
+            },
+
+            //拉去数据的处理方法
+            getgreet(data) {
+                let mydata = data.data;
+                this.greet = mydata.greet;
+            },
+            getcardcenter(data){
+                let mydata = data.data;
+                this.cardcenter = mydata;
+            },
+
+            //提交修改配置的一些方法
+            changegreet(){
+                if(!this.greet) {
+                    alert('问候语必须非空')
+                    return;
+                }
+                this.mypost(this.baseUrl+'greet',{newgreet:this.greet},function () {
+                   alert('修改成功');
+                });
+            },
+            createcard() { // 创建卡券
+                let self = this;
+                if(!this.newvalue|| !this.newuselimit || !this.newcount) {
+                    alert('卡券面值、限制以及库存均不能为空');
+                    return ;
+                }
+                this.mypost(this.baseUrl+'cardcenter',{
+                    value: this.newvalue,
+                    uselimit: this.newuselimit,
+                    count: this.newcount
+                },function () {
+                    alert('新建成功');
+                    self.cardcenter = [...self.cardcenter,{
+                        value: self.newvalue,
+                        uselimit: self.newuselimit,
+                        count: self.newcount
+                    }];
+                    self.newvalue = 0;
+                    self.newuselimit = 0;
+                    self.newcount = 0;
+                    self.iscreate = true;
+                })
+            }
+        },
+        mounted() {
+            this.myget(this.baseUrl+'greet',this.getgreet);// 获取问候
+            this.myget(this.baseUrl+'cardcenter',this.getcardcenter); //获取投放的卡券
+        }
+    })
+
+</script>
+</html>
