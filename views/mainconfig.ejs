@@ -73,6 +73,57 @@
         .carditem input {
             margin-right: 20px;
         }
+        .lbitem {
+            height: 80px;
+        }
+        .lbimg {
+            border-top: 1px solid #A0A0A0;
+            margin-bottom: 20px;
+        }
+        .lbcont {
+            padding: 0 45px;
+        }
+        .pre {
+            margin: 0 20px;
+        }
+        .food {
+            border-top: 1px solid #A0A0A0;
+            margin-bottom: 20px;
+        }
+        .square {
+            width: 40px;
+            height: 40px;
+        }
+        .foodcont {
+            padding: 0 45px;
+        }
+        .foodspan {
+            margin-right: 10px;
+        }
+        .foodinput {
+            margin-right: 20px;
+        }
+        .foodadd {
+            padding-top: 20px;
+        }
+        .down {
+            border-bottom: 2px solid #a0a0a0;
+            border-right: 2px solid #a0a0a0;
+            width: 13px;
+            height:13px;
+            display: inline-block;
+            transform: rotate(-45deg);
+            margin-left: 15px;
+        }
+        .up {
+            border-bottom: 2px solid #a0a0a0;
+            border-right: 2px solid #a0a0a0;
+            width: 13px;
+            height:13px;
+            display: inline-block;
+            transform: rotate(45deg);
+            margin-left: 15px;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +154,35 @@
               </div>
           </div>
       </div>
+      <div class="lbimg">
+          <p class="configtitle">轮播图</p>
+          <div class="lbcont">
+              <div class="lbitem" v-for="(item,index) in lbimg" :key="index">
+                  <p><input readonly v-model="item.lbimg" /> <span :data-lbid="item.lbid" :data-lbindex="index" class="save" @click="lbdelete($event)">删除</span> <span class="pre">预览:</span><img width="80px" height="50px" :src="item.lbimg"/></p>
+              </div>
+              <p class="save createcard" @click="iscreatelb=false" v-if="iscreatelb">新增轮播图</p>
+              <div v-if="!iscreatelb">
+                  <p class="mynewlb"><input  v-model="newlb" /> <span  class="save" @click="lbadd">新增</span> <span class="pre">预览:</span><img  width="80px" height="50px" :src="newlb"/></p>
+              </div>
+          </div>
+      </div>
+      <div class="food">
+          <p class="configtitle">食品</p>
+          <div class="foodcont">
+              <div>
+                  <p @click="downorup">已有食品<span  :class="square"></span></p>
+              </div>
+              <div v-if="foodshow">
+                  <div class="fooditem" v-for="(item,index) in food" :key="index">
+                      <p><span class="foodspan">名称</span><input readonly v-model="item.name" class="foodinput"></input><span class="foodspan">价格</span><input readonly v-model="item.price" class="foodinput"></input><span class="foodspan">描述</span><input readonly v-model="item.des" class="foodinput"></input><span>图片</span><img :src="item.img" width="50px" height="50px"><span :data-id="item.id" :data-index="index"  @click="fooddelete" class="save">删除</span></p>
+                  </div>
+              </div>
+              <div class="foodadd">
+                  <p class="save createcard" @click="isfoodadd=false" v-if="isfoodadd">新增食品</p>
+                  <p v-else><span class="foodspan">名称</span><input  v-model="newfoodname" class="foodinput"></input><span class="foodspan">价格</span><input  type="number" v-model="newfoodprice" class="foodinput"></input><span class="foodspan">描述</span><input  v-model="newfooddes" class="foodinput"></input><span>图片</span><input v-model="newfoodimg"/><img :src="newfoodimg" width="50px" height="50px"><span   @click="foodadd" class="save">新增</span></p>
+              </div>
+          </div>
+      </div>
   </div>
 
 </div>
@@ -117,10 +197,30 @@
             iscreate:true,
             newvalue:0,
             newuselimit:0,
-            newcount:0
+            newcount:0,
+            iscreatelb: true,
+            newlb:'',
+            lbimg: [], // 轮播图
+            food: [], // 食物
+            foodshow: false,
+            isfoodadd: true,
+            newfoodname:'',
+            newfoodimg:'',
+            newfoodprice:0,
+            newfooddes:'',
+            square: 'down'
         },
         methods: {
             //公共的一些方法
+            downorup(){
+              if(this.square == 'down') {
+                  this.square = 'up';
+                  this.foodshow =true;
+              }else {
+                  this.square = 'down';
+                  this.foodshow =false;
+              }
+            },
             myget(url,callback) {  //公共的get请求
                 if(!url || !callback) {
                     throw new Error('url和回调函数是两个必要的参数');
@@ -145,7 +245,7 @@
                          alert('数据加载出错'+data.errmsg);
                          return;
                      }
-                     callback&callback();
+                     callback&callback(data);
                  }).catch(err =>{
                      alert(err);
                  })
@@ -159,6 +259,13 @@
             getcardcenter(data){
                 let mydata = data.data;
                 this.cardcenter = mydata;
+            },
+            getlbimg(data) {
+                this.lbimg = data.data||[];
+            },
+            getfood(data) {
+                console.log(data);
+                this.food = data.data || [];
             },
 
             //提交修改配置的一些方法
@@ -193,11 +300,84 @@
                     self.newcount = 0;
                     self.iscreate = true;
                 })
+            },
+            lbdelete(event) { //删除轮播图
+                let self = this;
+                console.log(event);
+                let target = event.target;
+                let {lbid,lbindex} = target.dataset;
+                this.mypost(this.baseUrl+'lunboimg',{
+                    lbid: lbid,
+                    flag: 1
+                },function () {
+                    self.lbimg.splice(lbindex,1);
+                    alert('删除成功');
+                })
+            },
+            lbadd() { //新增一条轮播图
+                let self = this;
+                if(!this.newlb) {
+                    alert('轮播图地址不能为空')
+                    return;
+                }
+                this.mypost(this.baseUrl+'lunboimg',{
+                    lbimg: self.newlb,
+                    flag: 2
+                },function (data) {
+                    self.lbimg = [...self.lbimg,{
+                        lbimg: self.newlb,
+                        lbid: data.data.lbid
+                    }];
+                    console.log(self.lbimg);
+                    self.iscreatelb = true;
+                    self.newlb = "";
+                })
+            },
+            fooddelete(e) { // 删除食物
+                let self =this;
+               let {id,index} = e.target.dataset;
+               //请求删除接口
+                this.mypost(this.baseUrl+'food',{
+                    id: id,
+                    flag: 1
+                },function (data) {
+                    self.food.splice(index,1);
+                })
+            },
+            foodadd() {
+                let self = this;
+                if( !this.newfoodname|| !this.newfoodimg|| !this.newfoodprice|| !this.newfooddes) {
+                    alert('所有字段均不为空');
+                    return;
+                }
+                this.mypost(this.baseUrl+'food',{
+                    flag: 2,
+                    name: this.newfoodname,
+                    price: this.newfoodprice,
+                    img: this.newfoodimg,
+                    des: this.newfooddes
+                },function (data) {
+                  self.food = [...self.food,{
+                      name: self.newfoodname,
+                      price: self.newfoodprice,
+                      des: self.newfooddes,
+                      img: self.newfoodimg,
+                      id: data.data[0].id
+                  }];
+                  self.isfoodadd = true;
+                  self.newfoodname='';
+                  self.newfoodprice = 0;
+                  self.newfooddes = "";
+                  self.newfoodimg ="";
+                })
             }
         },
         mounted() {
             this.myget(this.baseUrl+'greet',this.getgreet);// 获取问候
             this.myget(this.baseUrl+'cardcenter',this.getcardcenter); //获取投放的卡券
+            this.myget(this.baseUrl+'lunboimg',this.getlbimg)//获取轮播图
+            this.myget(this.baseUrl+'food',this.getfood)//获取食物列表
+
         }
     })
 

@@ -16,6 +16,11 @@ var mainconfig = require('./routes/mainconfig'); // 商户端配置页面
 var cardcenter = require('./routes/cardcenter');//商户卡券投放接口
 var receivecard = require('./routes/receivecard'); //领取卡券接口
 var will_useing_used_card = require('./routes/will_useing_used_card');
+var lunboimg = require('./routes/lunboimg'); // 轮播图
+var  orderMainfood = require('./routes/orderMainfood');
+var food = require('./routes/food');
+
+
 var app = express();
 
 // view engine setup
@@ -34,6 +39,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 解决跨域问题
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
     next();
 });
@@ -49,6 +55,9 @@ app.use('/cardcenter',cardcenter); // 商户卡券投放接口
 app.use('/mainconfig',mainconfig); // 商户端的配置界面
 app.use('/receivecard',receivecard);// 领取卡券
 app.use('/will_useing_used_card',will_useing_used_card);
+app.use('/lunboimg',lunboimg);
+app.use('/orderMainfood',orderMainfood);// 点餐主页面食物信息
+app.use('/food',food);
 
 
 // catch 404 and forward to error handler

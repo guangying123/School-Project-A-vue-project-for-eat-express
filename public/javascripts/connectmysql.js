@@ -17,8 +17,6 @@ function  my_con_mysql(sql,par) {
             port: 3306
         });
         connection.connect();
-        console.log('!!!!');
-        console.log(par);
         if(!par) {
             connection.query(sql,(err,rows,fields) => {
                 if(err) {
@@ -31,6 +29,7 @@ function  my_con_mysql(sql,par) {
         }else{
             connection.query(sql,par,(err,rows,fields) => {
                 if(err) {
+                    console.log(err);
                     reject(err);
                     throw new Error('操作失败');
                 }else {
@@ -76,6 +75,12 @@ function  my_con_mysql_withpara(sql,para,callback) {
     })
     connection.end();
 }
+
+function  multiple_mysql_conn() {
+
+    
+}
+
 
 module.exports = {
     my_con_mysql,
