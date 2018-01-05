@@ -124,6 +124,40 @@
             transform: rotate(45deg);
             margin-left: 15px;
         }
+        .foodkind {
+            border-top: 1px solid #A0A0A0;
+            margin-bottom: 20px;
+        }
+        .foodkindcont {
+            padding: 0 45px;
+        }
+        .foodkindleft p {
+            width: 50px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .foodkindleftpactive {
+            background-color: deepskyblue;
+        }
+        .foodkindleft p{
+            cursor: pointer;
+        }
+        .foodkindright {
+            display: flex;
+            display: -webkit-flex;
+        }
+        .foodkindleft {
+            width: 80px;
+        }
+        .foodkinditem {
+            display: flex;
+            display: -webkit-flex;
+        }
+        .foodkindsepar {
+            margin-right: 20px;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +217,29 @@
               </div>
           </div>
       </div>
+      <div class="foodkind">
+          <p class="configtitle">种类</p>
+          <div class="foodkindcont">
+              <div v-for="(item,index) in foodkind" class="foodkinditem">
+                  <div class="foodkindleft">
+                      <p :data-type="index" @click="foodkindchange" :class="{foodkindleftpactive:foodkindindex==index}">{{item.type}}</p>
+                  </div>
+                  <div class="foodkindright" v-show="foodkindindex==index">
+                      <div class="foodkindsepar">
+                          <select v-model="foodkdadd">
+                              <option v-for="(ssitem,ssindex) in foodkindadd" :value="ssitem.id">{{ssitem.name  }}  ￥{{ssitem.price}}</option>
+                          </select><span class="save" @click="foodkdaddm">新增</span>
+                      </div>
+                      <div v-if="item.detail.length>0"><select v-model="foodkdjian">
+                              <option v-for="(sitem,sindex) in item.detail" :value="sitem.foodid">{{sitem.name  }}  ￥{{sitem.price}}</option>
+                          </select><span class="save" @click="foodkdjianm">删除</span></div>
+                      <div v-else>
+                          <span>无可删除食品~~</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
   </div>
 
 </div>
@@ -208,7 +265,13 @@
             newfoodimg:'',
             newfoodprice:0,
             newfooddes:'',
-            square: 'down'
+            square: 'down',
+            foodkind:[],
+            foodkindindex:0,
+            foodkindadd: [] ,//食品种类新增时用到
+            foodkdadd: '',
+            foodkdjian: '',
+            foddkindshunxu: ['rx','cc','lc','gjf','tl','xc','zs','yp']
         },
         methods: {
             //公共的一些方法
@@ -266,6 +329,25 @@
             getfood(data) {
                 console.log(data);
                 this.food = data.data || [];
+            },
+            getfoodkind(data) {
+                data = data.data || [];
+                let mymap ='热销,炒菜,凉菜,盖浇饭,汤类,小吃,主食,饮品'.split(',');
+                let result = new Array(8);
+                let resultlen  = result.length;
+                data.forEach(val =>{
+                   result[mymap.indexOf(val.type)] = val;
+                })
+                for(let i=0;i< resultlen;i++){
+                    if(!result[i]) {
+                        result[i] = {};
+                        result[i].type = mymap[i];
+                        result[i].detail = [];
+                    }
+                }
+                this.foodkind = result;
+                this.foodkindselect();
+                console.log(this.foodkind);
             },
 
             //提交修改配置的一些方法
@@ -342,6 +424,9 @@
                     flag: 1
                 },function (data) {
                     self.food.splice(index,1);
+                    // 遍历食物种类数据，删除掉已删除的foodId食物
+                    self.foodkindalldelete(id);
+                    self.foodkindselect(); // 更新种类中的新增食品
                 })
             },
             foodadd() {
@@ -369,7 +454,106 @@
                   self.newfoodprice = 0;
                   self.newfooddes = "";
                   self.newfoodimg ="";
+                  self.foodkindselect();
                 })
+            },
+            foodkindalldelete(id){
+                this.foodkind.forEach(val =>{
+                  val.detail = val.detail.filter(tval =>{
+                      return tval.foodid != id;
+                  })
+                })
+            },
+            foodkindchange(e) {
+                let {type} = e.target.dataset;
+                this.foodkindindex=type;
+                this.foodkindselect();
+                this.foodkdadd = "";
+                this.foodkdjian = "";
+            },
+            foodkindselect(){  //新增的食品种类中的数据
+                 // this.foodkindindex 代表哪一个种类被选中 foodkindadd
+                this.foodkindadd = this.food.filter(val =>{
+                    let flag = true;
+                    let myfoodkingdata =  this.foodkind[this.foodkindindex].detail;
+                    let mylen = myfoodkingdata.length;
+                    for(let i =0;i<mylen;i++){
+                        if(val.id==myfoodkingdata[i].foodid){
+                            flag = false;
+                            break;
+                        }
+                    }
+                    return flag;
+                });
+            },
+            getfoodinfo(id){
+                return this.food.filter(val=>{
+                    return val.id == id;
+                })
+            },
+            foodkdaddm(){
+                let self = this;
+                if(!this.foodkdadd) {
+                    alert('新增食品不能为空');
+                    return;
+                }
+                this.mypost(this.baseUrl+'orderMainfood',{
+                    flag:2,
+                    kind: this.foddkindshunxu[this.foodkindindex],
+                    foodid: this.foodkdadd
+                },function (data) {
+                    if(data.error == 0){
+                        alert('食品添加成功');
+                        //添加成功后从新增食品项目中删掉，加入到删除食品项目中
+                        self.foodkindadd = self.foodkindadd.filter(tem=>{
+                            return tem.id != self.foodkdadd;
+                        });
+                        let mytemp =  self.getfoodinfo(self.foodkdadd)[0];
+                        self.foodkind[self.foodkindindex].detail.push({
+                            foodid: self.foodkdadd,
+                            name: mytemp.name,
+                            price: mytemp.price
+                        }) ;
+                            self.foodkdadd = '',
+                            self.foodkdjian =  ''
+
+                    }else {
+                        alert('食品添加失败');
+                    }
+                });
+            },
+            foodkdjianm() {
+                let self = this;
+                if(!this.foodkdjian) {
+                    alert('删除食品不能为空');
+                    return;
+                }
+                this.mypost(this.baseUrl+'orderMainfood',{
+                    flag:1,
+                    kind: this.foddkindshunxu[this.foodkindindex],
+                    foodid: this.foodkdjian
+                },function (data) {
+                    console.log(data);
+                    if(data.error == 0){
+                        //删除成功后从删除食品项目中删掉，加入到新增食品项目中
+                        let mytemp =  self.getfoodinfo(self.foodkdjian)[0];
+                        self.foodkind[self.foodkindindex].detail = self.foodkind[self.foodkindindex].detail.filter(val=>{
+                            return val.foodid != self.foodkdjian;
+                        })
+                        self.foodkindadd.push({
+                            id: self.foodkdadd,
+                            name: mytemp.name,
+                            price: mytemp.price
+                        });
+                        alert('食品删除成功');
+                            self.foodkdadd = '',
+                            self.foodkdjian =  ''
+                    }else {
+                        alert('食品删除失败');
+                    }
+                })
+                console.log(this.foodkdjian)
+                console.log(this.foddkindshunxu[this.foodkindindex])
             }
         },
         mounted() {
@@ -377,7 +561,7 @@
             this.myget(this.baseUrl+'cardcenter',this.getcardcenter); //获取投放的卡券
             this.myget(this.baseUrl+'lunboimg',this.getlbimg)//获取轮播图
             this.myget(this.baseUrl+'food',this.getfood)//获取食物列表
-
+            this.myget(this.baseUrl+'orderMainfood',this.getfoodkind); // 请求食物所属种类接口
         }
     })
 

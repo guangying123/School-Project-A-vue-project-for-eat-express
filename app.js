@@ -19,6 +19,8 @@ var will_useing_used_card = require('./routes/will_useing_used_card');
 var lunboimg = require('./routes/lunboimg'); // 轮播图
 var  orderMainfood = require('./routes/orderMainfood');
 var food = require('./routes/food');
+var mycount = require('./routes/mycount');
+var orderhistory = require('./routes/orderhistory');// 订单历史页
 
 
 var app = express();
@@ -58,6 +60,9 @@ app.use('/will_useing_used_card',will_useing_used_card);
 app.use('/lunboimg',lunboimg);
 app.use('/orderMainfood',orderMainfood);// 点餐主页面食物信息
 app.use('/food',food);
+app.use('/mycount',mycount);
+app.use('/orderhistory',orderhistory);
+
 
 
 // catch 404 and forward to error handler
