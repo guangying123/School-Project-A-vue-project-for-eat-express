@@ -33,7 +33,8 @@ router.get('/', function(req, res, next) {
 router.post('/',function (req,res,next) {
     let reqdata  = req.body;
     let {count,userID,eattype,cardId,food,value=0} = reqdata;
-    //支付接口的核心函数，提交交易信息后，先去查用户的账户，当余额满足时，开启事务执行余额减花费，订单记录插入一条数据，并在订单内容表中将所有消费的食物插入其中，如果使用优惠券，
+    //支付接口的核心函数，提交交易信息后，先去查用户的账户，当余额满足时，开启事务执行余额减花费，订单记录插入一条数据，
+    // 并在订单内容表中将所有消费的食物插入其中，如果使用优惠券，
     //还需将优惠券的状态修改为已使用。
     count-=value; // 减去优惠券后的金额
     let sqlcount = 'select mycount from usercount where userId = ?';
@@ -69,7 +70,7 @@ router.post('/',function (req,res,next) {
                     password: '123456',
                     port: 3306
                 });
-                connection.beginTransaction(err1=>{
+                connection.beginTransaction(err1=>{ // 显示的开启数据库事务,执行账户余额的修改，以及交易记录的添加
                     if(err1){
                         data.error = -1;
                         data.errmsg = err1.message
